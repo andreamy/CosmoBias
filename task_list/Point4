@@ -8,7 +8,7 @@
    "source": [
     "import sys\n",
     "import importlib\n",
-    "sys.path.append('/home/andrea/ownCloud2/laptop/pycharmProject1/')\n",
+    "sys.path.append('../PyScripts/')\n",
     "\n",
     "import utils.function_library \n",
     "importlib.reload(utils.function_library)\n",
