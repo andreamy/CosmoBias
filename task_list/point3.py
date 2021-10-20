@@ -1,4 +1,4 @@
-def plot_covmat_differences(standard_covmat, shifted_covmat)
+def plot_covmat_differences(standard_covmat, shifted_covmat):
     """
     Plots the percentual deviation of each covariance matrix element, if the free 
     parameters of the covariance are varied within their error bars. (e.g. n_eff 
