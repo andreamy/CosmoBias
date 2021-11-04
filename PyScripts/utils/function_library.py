@@ -103,6 +103,9 @@ def pos_neg_colormap(matrix):
 
 
 def largest_values(matrix, number_of_values):
+    """
+    Returns the largest values within a matrix, up to a number_of_values.
+    """
     # Make array starting from 0 and ending at the dimensions of the matrix, multiplied (270x270)
     index_matrix = np.arange(0, len(matrix.flatten()), 1, dtype=np.int)
 
@@ -187,6 +190,24 @@ def reduce_covmat_dimension(covmat):
 
 
 def get_cosmological_parameters(ini_filename, N_parameters):
+    """
+    Creates a dictionary from a CosmoCov inifile containing the names
+    and values of the cosmological parameters.
+
+    Parameters
+    ----------
+    ini_filename : string
+                    Name of the inifile called by CosmoCov.
+    N_parameters : int
+                    Number of parameters to be read (i.e. number of lines to
+                    read in the file).
+
+    Returns
+    -------
+    cosmo_parameters : dict
+                        dictionary containing the names and values of the
+                        N cosmological parameters read from file.
+    """
     k = 0
     cosmo_parameters = {}
     f = open(ini_filename, "r")
@@ -483,6 +504,45 @@ def chi_square_test(data_covariance_matrix, theory_vector, data_vector):
 
 
 def linear_theta(X, sigma, mu, data, cosmo_parameters, inverted_sigma=False):
+    """
+    Computes the linearized best-fitting parameters as in Eq. 7 of Sellentin(2019).
+
+    Parameters
+    ----------
+    X : 2darray
+            Non-square matrix containing the first derivatives of mu w.r.t. each
+            cosmo parameter.
+
+    sigma : 2darray
+            Covariance matrix with size (Ndim, Ndim), (e.g. for K1000
+            the dimension Ndim = 270).
+
+    mu : 2darray
+            Vector containing CosmoCov (theoretical) xipm values for all redshift bin pairs.
+            It must be 2D (Ndim, 1) to allow matrix multiplication operations.
+
+    data : 2darray
+            Vector containing KiDS-1000 xipm values for all redshift bin pairs.
+            It must be 2D (Ndim, 1) to allow matrix multiplication operations.
+
+    cosmo_parameters : dict
+                        Dictionary containing the names and values of the
+                        N cosmological parameters read from file.
+
+    type_of_shift : string
+                    Choose 'up' for a 5% increase of each matrix element and 'down'
+                    for a 5% decrease.
+
+    inverted_sigma : bool, optional
+                    Indicates whether the covariance matrix has been already inverted.
+                    It allows to modify the matrix elements on the inverted matrix instead of
+                    the matrix itself.
+
+    Returns
+    -------
+    theta_lin : ndarray
+                Vector containing linear approximations of the cosmo_parameters value.
+    """
     parameter_list = np.reshape(list(cosmo_parameters.values()), (-1, 1))
 
     if inverted_sigma == True:
@@ -499,6 +559,54 @@ def sigmas_away(mean_value, value, sigma):
 
 
 def shift_covmat_elements(simulation, X, sigma, mu, data, cosmo_parameters, type_of_shift='up', inverted_sigma=False):
+    """
+    Calculate how much each of the cosmological parameters (Omega_m, Omega_b, h, sigma_8, n_s, A_IA, w_0, w_a) shifts
+    if one covmat element is 5% too high, or too low.
+
+    Parameters
+    ----------
+    simulation : string
+                Name of the simulation. All the output files/directories related to this
+                simulation will contain this string.
+
+    X : 2darray
+        Non-square matrix containing the first derivatives of mu w.r.t. each cosmo parameter.
+
+    sigma : 2darray
+            Covariance matrix with size (Ndim, Ndim), (e.g. for K1000
+            the dimension Ndim = 270).
+
+    mu : 2darray
+            Vector containing CosmoCov (theoretical) xipm values for all redshift bin pairs.
+            It must be 2D (Ndim, 1) to allow matrix multiplication operations.
+
+    data : 2darray
+            Vector containing KiDS-1000 xipm values for all redshift bin pairs.
+            It must be 2D (Ndim, 1) to allow matrix multiplication operations
+
+    cosmo_parameters : dict
+                        Dictionary containing the names and values of the
+                        N cosmological parameters read from file.
+
+    type_of_shift : string
+                    Choose 'up' for a 5% increase of each matrix element and 'down'
+                    for a 5% decrease.
+
+    inverted_sigma : bool, optional
+                    Indicates whether the covariance matrix has been already inverted.
+                    It allows to modify the matrix elements on the inverted matrix instead of
+                    the matrix itself.
+
+    Returns
+    -------
+    parameters_shifts_sym: 3darray
+                            Array of symmetric matrices, one per cosmo parameter, containing the shifts
+                            in the parameter value due to a 5% increase or decrease of the matrix elements.
+                            For example, if sigma[i,j] is modified to sigma[i,j]*1.05 (5% increase), the
+                            value parameter_shifts_sym[i,j] will indicate by how much this has shifted
+                            the original value of the parameter.
+
+    """
     k = 0
     N_dim = sigma.shape[0]
     #N_dim=10
@@ -568,10 +676,26 @@ def shift_covmat_free_parameters(free_parameter, X, sigma_shifted, mu, data, cos
 
 
 def feature_scaling_norm(vector, vector_max, vector_min):
+    """
+    Normalizes vector within values of vector_max and vector_min.
+    Parameters
+    ----------
+    vector : ndarray
+            Vector to be normalized.
+    vector_max : ndarray
+                Vector with maximum values.
+    vector_min : ndarray
+                Vector with minimum values.
+
+    Returns
+    -------
+    norm : ndarray
+            Normalized vector.
+    """
     a = -1
     b = +1
-    return a + (((vector - vector_min) * (b - a)) / (vector_max - vector_min))
-
+    norm = a + (((vector - vector_min) * (b - a)) / (vector_max - vector_min))
+    return norm
 
 def precision_recommendation(X, sigma, mu, data, cosmo_parameters, survey='K1000'):
     """
@@ -579,12 +703,36 @@ def precision_recommendation(X, sigma, mu, data, cosmo_parameters, survey='K1000
         by showing the maximum percent deviation a covariance element could have while keeping
         the parameters at 1sigma.
 
-        The symmetrized errors come from Asgari(2020), cosmic shear, table A.2, 2PCF, MAP values
-        The symmetrized error is 1 sigma
+    Parameters
+    ----------
+    X : 2darray
+            Non-square matrix containing the first derivatives of mu w.r.t. each
+            cosmo parameter.
+
+    sigma : 2darray
+            Covariance matrix with size (Ndim, Ndim), (e.g. for K1000
+            the dimension Ndim = 270).
+
+    mu : 2darray
+            Vector containing CosmoCov (theoretical) xipm values for all redshift bin pairs.
+            It must be 2D (Ndim, 1) to allow matrix multiplication operations.
+
+    data : 2darray
+            Vector containing KiDS-1000 xipm values for all redshift bin pairs.
+            It must be 2D (Ndim, 1) to allow matrix multiplication operations.
+
+    cosmo_parameters : dict
+                        Dictionary containing the names and values of the
+                        N cosmological parameters read from file.
+    survey
+
+    Returns
+    -------
+
     """
     N_dim = sigma.shape[0]
     p = 0.1
-    # one sigma errors KiDS1000
+    # one sigma (symmetrized) errors KiDS1000
     omega_m_symerr = 0.5 * (0.065 + 0.033) * p
     sigma8_symerr = 0.5 * (0.084 + 0.107) * p
     n_s_symerr = 0.5 * (0.093 + 0.049) * p
@@ -799,7 +947,10 @@ def plot_derivatives(simulation):
 
 
 def K1000_standard_dev_symmetrized():
-    # 1 sigma errors from KiDS-1000 best fit of 2PCF, symmetrized
+    """
+    The symmetrized errors come from Asgari(2020), cosmic shear, table A.2, 2PCF, MAP values
+    """
+
     omega_m_symerr = 0.5 * (0.065 + 0.033)
     sigma8_symerr = 0.5 * (0.084 + 0.107)
     n_s_symerr = 0.5 * (0.093 + 0.049)
@@ -878,3 +1029,63 @@ def RunCosmolike_Nparameters(mini_dict):
                               'omb': 0.041, 'h0': 0.68, 'A_ia': 0.41}
     for i in mini_dict:
         insert_new_values({i: close_to_bestfit_cosmo[i]}, inifile)
+
+
+def normalise_shifts(shift_matrix):
+    """
+    The function normalizes shift_matrix to prepare it for the ranking functions
+    (total_shift, largest_values, etc) used in point 5 and 6.
+
+    Parameters
+    ----------
+    shift_matrix : 3darray
+                    Matrix whose elements are to be ranked.
+
+    Returns
+    -------
+    normalised_shift : 3darray
+                    Normalised matrix.
+    """
+    # first normalise shifts, and then add up everything
+    N_dim = shift_matrix.shape[0]
+    N_parameters = shift_matrix.shape[2]
+    total_shift = np.zeros((N_parameters,))
+    normalised_shift = np.zeros(shape=(N_dim, N_dim, N_parameters))
+
+    for i in range(N_parameters):
+        max_value = np.max((shift_matrix[:, :, i]).flatten())
+        min_value = np.min((shift_matrix[:, :, i]).flatten())
+        normalised_shift[:, :, i] = feature_scaling_norm(shift_matrix[:, :, i],
+                                                         max_value, min_value)
+    # print( normalised_shift[:,:,i])
+    return normalised_shift
+
+
+def rank_parameter_shifts(normalised_shift_matrix):
+    """
+    Cumulative shift from all matrix elements for each biased parameter.
+    The function adds all the shifts per parameter to rank them from most
+    to least biased.
+
+    Parameters
+    ----------
+    normalised_shift_matrix : 3darray
+                    Matrix whose elements are to be ranked.
+
+    Returns
+    -------
+    total_shift : 1darray
+                    Array containing a sorted list of the sum of
+                    each matrix element shift.
+    """
+    # N_dim = 270
+    N_dim = normalised_shift_matrix.shape[0]
+    N_parameters = normalised_shift_matrix.shape[2]
+    total_shift = np.zeros((N_parameters,))
+
+    for i in range(N_parameters):
+        total_shift[i] = np.sum(normalised_shift_matrix[:, :, i])
+
+    np.sort(total_shift)
+
+    return total_shift
