@@ -1,7 +1,9 @@
 # Biasing_covmat
 
-Prerequisites: both CosmoCov and CLASS v=>3.0 need to be installed in order to use CosmoBias. Two extra files have to be added/modified to CosmoCov in order to get the xipm and to run HMCode via CLASS.
-Cosmocov needs to be placed in the same directory as CosmoBias, and CLASS should be installed in CosmoCov/cosmolike_core/.
+Prerequisites: 
+- Both CosmoCov and CLASS v=>3.0 need to be installed in order to use CosmoBias. Some files (CLASS_wrapper.c, cosmo2D_fullsky_xipm.c, run_covariances_real_bin_fft.c) have to be added/modified in CosmoCov/cosmolike_core/theory/ in order to get the xipm data vector and to run HMCode via CLASS. These can be found in the folder 'CosmoCov_extras'.
+
+- Cosmocov needs to be placed in the same directory as CosmoBias, and CLASS should be installed in CosmoCov/cosmolike_core/.
 
 Quick step guide to get all the data needed to run the task list scripts:
 
