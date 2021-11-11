@@ -225,9 +225,21 @@ def get_cosmological_parameters(ini_filename, N_parameters):
     return cosmo_parameters
 
 
-# make a function of editing the file by replacing, useful for running cosmolike anytime.
-# can be called for every thing we want to change
 def edit_ini_file(ini_filename, string_to_replace, new_string):
+    """
+    Looks for a specific string in the file ini_filename and replaces it by the new string.
+
+    Parameters
+    ----------
+    ini_filename : string
+                Name of the file to be edited.
+
+    string_to_replace : string
+                        Character or sentence to be replaced.
+
+    new_string : string
+                Character or sentence to be written over the replaced string.
+    """
     # Read in the file, replace the target string and write the file out again
     with open(ini_filename, 'r') as file:
         filedata = file.read()
@@ -264,6 +276,51 @@ def create_theory_vector(xipm_path, simulation_name):
 
 def create_X_matrix(simulation_name, fiducial_mu, ini_filename, script, N_parameters=None,
                     Ndim_parameters=None, kids=True, reduced_dimension=False):
+    """
+    Create a matrix with the first-time derivatives of the theory vector "fiducial_mu" with respect to each cosmological
+    parameter.
+
+    Parameters
+    ----------
+    simulation_name : string
+                    Name of the simulation. All the output files/directories related to this
+                    simulation will contain this string.
+
+    fiducial_mu : 2darray
+                Vector containing CosmoCov (theoretical) xipm values for all redshift bin pairs.
+                It must be 2D (Ndim, 1) to allow matrix multiplication operations.
+
+    ini_filename : string
+                Name of the inifile called by CosmoCov.
+
+    script : string
+            Name of the bash script that runs CosmoCov. This facilitates switching between Gaussian runs (to obtain the
+            xipm's and create a mu vector) and non-Gaussian runs (to compute all the contribution terms of the
+            covariance matrix. It can also be used to call the Euklids script, which calls a quite different inifile in
+            order to prevent mistakes when switching between KiDS a Euklids.
+
+    N_parameters : int
+                Number of parameters to be read (i.e. number of lines to
+                read in the file).
+
+    Ndim_parameters : dict
+                    Dictionary containing cosmological parameters and values that have been modified in this simulation.
+
+    kids : bool
+        If True, the parameters that are not constrained by KiDS are removed from the Xmatrix(i.e wa, w0, etc). That
+        means that CosmoCov uses the default values for these parameters.
+
+    reduced_dimension : bool
+                        If True, the data dimension is reduced as in Asgari et al. (2020) (KiDS-1000 cosmic shear paper),
+                        where they discard first three values of xi_m from the cosmological analysis due to their
+                        increased sensitivity to smaller physical scales.
+
+    Returns
+    -------
+    X_matrix : 2darray (transposed for convenience)
+               Non-square matrix containing the first derivatives of fiducial_mu with respect to each
+               cosmological parameter.
+    """
     if Ndim_parameters:
         cosmo_parameters = Ndim_parameters #must be a dictionary with keys and values
 
@@ -312,8 +369,43 @@ def create_X_matrix(simulation_name, fiducial_mu, ini_filename, script, N_parame
 
 
 def forward_derivative(simulation_name, parameter, fiducial_mu, h, N_dimension, ini_file, script, reduced_dimension=False):
-    # Parameter must be a string
-    # h = 0.01
+    """
+        Computes the first forward derivative of the theory vector fiducial_mu with respect to a parameter, by running
+        a new simulation in CosmoCov with a small shift in the parameter.
+
+        Parameters
+        ----------
+        simulation_name : string
+                        Name of the simulation. All the output files/directories related to this
+                        simulation will contain this string.
+
+        parameter : string
+                    Name of the cosmological parameter that is slightly shifted to compute the derivative with respect
+                    to it.
+
+        fiducial_mu : 2darray
+                    Vector containing CosmoCov (theoretical) xipm values for all redshift bin pairs.
+                    It must be 2D (Ndim, 1) to allow matrix multiplication operations.
+
+        ini_file : string
+                    Name of the inifile called by CosmoCov.
+
+        script : string
+                Name of the bash script that runs CosmoCov. This facilitates switching between Gaussian runs (to obtain the
+                xipm's and create a mu vector) and non-Gaussian runs (to compute all the contribution terms of the
+                covariance matrix. It can also be used to call the Euklids script, which calls a quite different inifile in
+                order to prevent mistakes when switching between KiDS a Euklids.
+
+        reduced_dimension : bool
+                            If True, the data dimension is reduced as in Asgari et al. (2020) (KiDS-1000 cosmic shear paper),
+                            where they discard first three values of xi_m from the cosmological analysis due to their
+                            increased sensitivity to smaller physical scales.
+
+        Returns
+        -------
+        derivative : 1darray
+                    Discrete forward derivative of fiducial_mu.
+        """
     derivative = np.zeros((N_dimension,))
 
     if type(parameter) != str:
@@ -332,9 +424,27 @@ def forward_derivative(simulation_name, parameter, fiducial_mu, h, N_dimension, 
     return derivative
 
 
-# do the for loop out, in case that I need to use the derivative for something else
-# do another function called X that returns the whole thing together. Much better
+
 def setup_and_run_CosmoLike(simulation_name, ini_file, script):
+    """
+
+    Parameters
+    ----------
+    simulation_name : string
+                        Name of the simulation. All the output files/directories related to this
+                        simulation will contain this string.
+    ini_file : string
+                    Name of the inifile called by CosmoCov.
+    script : string
+                Name of the bash script that runs CosmoCov. This facilitates switching between Gaussian runs (to obtain the
+                xipm's and create a mu vector) and non-Gaussian runs (to compute all the contribution terms of the
+                covariance matrix. It can also be used to call the Euklids script, which calls a quite different inifile in
+                order to prevent mistakes when switching between KiDS a Euklids.
+
+    Returns
+    -------
+    The theory vector that is the result of a small shift in the parameter to be derived with respect to.
+    """
 
     # save inifile to know later which settings were used.
     target = '../CosmoCov/covs/simulation_settings/inifile_' + simulation_name + '.txt'
@@ -510,8 +620,8 @@ def linear_theta(X, sigma, mu, data, cosmo_parameters, inverted_sigma=False):
     Parameters
     ----------
     X : 2darray
-            Non-square matrix containing the first derivatives of mu w.r.t. each
-            cosmo parameter.
+            Non-square matrix containing the first derivatives of fiducial_mu with respect to each
+            cosmological parameter.
 
     sigma : 2darray
             Covariance matrix with size (Ndim, Ndim), (e.g. for K1000
@@ -724,11 +834,15 @@ def precision_recommendation(X, sigma, mu, data, cosmo_parameters, survey='K1000
     cosmo_parameters : dict
                         Dictionary containing the names and values of the
                         N cosmological parameters read from file.
-    survey
+    survey : string
+            This parameter defines the standard deviations depending on the used survey.
+            The options are 'k1000' for KiDS-1000 (default), or 'Euclid'.
 
     Returns
     -------
-
+    recommended_precision : 3darray
+                            Array of matrices whose elements indicate the largest error that an element can withstand
+                            without biasing a particular parameter by more than 10% of the corresponding 1sigma.
     """
     N_dim = sigma.shape[0]
     p = 0.1
