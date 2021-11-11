@@ -1013,6 +1013,36 @@ def multivariate_gaussian(pos, mu, Sigma):
 
 def plot_matrix_colormap(matrix, colormap=None, min_value=None, max_value=None, title="Default title",
                          ylabel=None, pngfilename="changefilename"):
+    """
+    Shows the given matrix as a colormap.
+
+    Parameters
+    ----------
+    matrix : ndarray
+            Matrix to be plotted.
+
+    colormap : string, optional
+                Color map of choice, within available choices in matplotlib.
+
+    min_value : float, optional
+                If given, values beneath this will be saturated in color.
+
+    max_value : float, optional
+                If given, values above this will be saturated in color.
+
+    title : string
+            Title to be displayed.
+
+    ylabel : string
+            Title for the y-axis.
+
+    pngfilename : string
+                Name of the image file to be saved.
+
+    Returns
+    -------
+    ax1 : the plot of the matrix.
+    """
     fig, (ax1) = plt.subplots(figsize=(10, 7), ncols=1)
     # fig.suptitle(title, fontsize=20)
     ax1.set_title(title, fontdict={'fontsize': 15, 'fontweight': 'medium'})
@@ -1203,3 +1233,35 @@ def rank_parameter_shifts(normalised_shift_matrix):
     np.sort(total_shift)
 
     return total_shift
+
+
+def euklids_scalar_bias(euklids_shift_matrix):
+    """
+    Computes the bias for each cosmological parameter by summing up the bias introduced
+    by each element int the shift matrix, normalizing it beforehand.
+
+    Parameters
+    ----------
+    euklids_shift_matrix : ndarray
+                    Array of symmetric matrices, one per cosmo parameter, containing the shifts
+                    in the parameter value due to a 5% increase or decrease of the matrix elements.
+                    Computed in the function shift_covmat_elements().
+
+    Returns
+    -------
+    normalized_bias : ndarray
+                Array containing in each component the sum of all matrix elements in the
+                 shift matrix, previously normalized.
+
+    """
+    N_dimension = euklids_shift_matrix.shape[1]
+    N_parameters = euklids_shift_matrix.shape[0]
+    normalized_bias = np.zeros((N_parameters,))
+    normalized_bias_matrix = np.zeros(shape=(N_parameters, N_dimension, N_dimension))
+
+    for i in range(N_parameters):
+        normalized_bias_matrix[i, :, :] = euklids_shift_matrix[i, :, :] / N_dimension ** 2
+        # print(normalized_bias_matrix[i,:,:])
+        normalized_bias[i] = np.sum(normalized_bias_matrix[i, :, :])
+
+    return normalized_bias
