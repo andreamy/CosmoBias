@@ -427,6 +427,7 @@ def forward_derivative(simulation_name, parameter, fiducial_mu, h, N_dimension, 
 
 def setup_and_run_CosmoLike(simulation_name, ini_file, script):
     """
+    Creates output directories needed for CosmoCov and then runs it.
 
     Parameters
     ----------
