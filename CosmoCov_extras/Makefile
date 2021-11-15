@@ -12,7 +12,7 @@ cfftlog := $(cfftlog_dir)cfftlog.c $(cfftlog_dir)utils.c $(cfftlog_dir)utils_com
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Julien's class must lie in a folder "class" WITHOUT version number
-# curently it is version 2.6.3
+# curently it is version 3.0
 
 #Directory in which Julien Lesgourges et al's CLASS lies
 J:= ../cosmolike_core/class/
@@ -30,32 +30,6 @@ $(B)hyrectools.o $(B)injection.o $(B)input.o $(B)lensing.o \
 $(B)noninjection.o $(B)output.o $(B)parser.o $(B)perturbations.o  \
 $(B)primordial.o $(B)quadrature.o $(B)sparse.o $(B)thermodynamics.o \
 $(B)transfer.o $(B)trigonometric_integrals.o $(B)wrap_hyrec.o $(B)wrap_recfast.o
-
-
-#FOR CLASS v2.9
-#because it allows the CLASS developers to keep their relative path names.
-#OBJ=$(J)build/arrays.o $(J)build/background.o $(J)build/common.o \
-#$(J)build/dei_rkck.o $(J)build/evolver_ndf15.o $(J)build/evolver_rkck.o \
-#$(J)build/growTable.o $(J)build/helium.o $(J)build/history.o \
-#$(J)build/hydrogen.o $(J)build/hyperspherical.o $(J)build/hyrectools.o \
-#$(J)build/input.o $(J)build/lensing.o $(J)build/nonlinear.o $(J)build/output.o \
-#$(J)build/parser.o $(J)build/perturbations.o $(J)build/primordial.o \
-#$(J)build/quadrature.o $(J)build/sparse.o $(J)build/spectra.o \
-#$(J)build/thermodynamics.o $(J)build/transfer.o $(J)build/trigonometric_integrals.o
-#$(J)cpp/ClassEngine.o  $(J)cpp/Engine.o
-
-#FOR CLASS v2.7
-#This is massively ugly, but let's leave it for now,
-#because it allows the CLASS developers to keep their relative path names.
-#OBJ=$(J)build/arrays.o $(J)build/background.o $(J)build/common.o \
-#$(J)build/dei_rkck.o $(J)build/evolver_ndf15.o $(J)build/evolver_rkck.o \
-#$(J)build/growTable.o  \
-#$(J)build/hyperspherical.o \
-#$(J)build/input.o $(J)build/lensing.o $(J)build/nonlinear.o $(J)build/output.o \
-#$(J)build/parser.o $(J)build/perturbations.o $(J)build/primordial.o \
-#$(J)build/quadrature.o $(J)build/sparse.o $(J)build/spectra.o \
-#$(J)build/thermodynamics.o $(J)build/transfer.o
-
 
 #If you have made changes to Julien's class, recompile it:
 #This compiles the stand-alone version of class
