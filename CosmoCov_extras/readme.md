@@ -8,6 +8,8 @@
 
 - The Makefile in Cosmolike/covs/ needs to be replaced by the one in here in order to call CLASS from CosmoCov. 
 
+- The file Cosmolike/covs/init.c needs to be replaced by the one here in order to compute the angular binning as in KiDS-1000, i.e. logarithmic spaced bins and centered angles instead of using lower bound thetas for each bin. It also adds the code snippet necessary to pass the variable SIMULATION from the ini_file. 
+
 **Minor modifications:**
 
 -May need to remove the function **int recompute_cosmo3D_CLASS(cosmopara C)** in the file CosmoCov/cosmolike_core/theory/recompute.c (in order to avoid errors when running CosmoCov with CLASS).
@@ -16,11 +18,13 @@
 
     char simulation[200]; /* simulation name containing info about changed parameters*/
     
-- In the file , the following modifications have to be made:
+- In the file CosmoCov/covs/compute_covariances_real_flat_fft.c, the following modifications have to be made:
   - Add to the include section: #include "../cosmolike_core/theory/cosmo2D_fullsky_xipm.c" 
-  - To follow the new notation of the modified function **run_cov_shear_shear_real_binned()**, replace the line below by the new one: 
-      
+  - To follow the new notation of the modified function **run_cov_shear_shear_real_binned()**, replace the line below by the new one 
+    (and repeat for any time that you call the function):  
+    
       OLD: run_cov_shear_shear_real_bin(OUTFILE,covparams.outdir,thetamin,dtheta,Ntheta,l,m,1,1,k);
       
       NEW: run_cov_shear_shear_real_bin(covparams.simulation, OUTFILE,covparams.outdir,thetamin,dtheta,Ntheta,l,m,1,1,k);
         
+ 
