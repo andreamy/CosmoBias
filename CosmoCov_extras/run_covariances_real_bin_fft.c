@@ -54,11 +54,6 @@ void run_cov_shear_shear_real_binned(char *SIMULATION, char *OUTFILE, char *PATH
       xip[i] = xi_pm_fullsky(1, i, z1, z2);
       xim[i] = xi_pm_fullsky(0, i, z1, z2);
       fprintf(xipm1, "%le %le %le  \n", theta[i]*180*60/M_PI, xip[i], xim[i]);
-      //printf("*theta[i] = %le, thetamin[i]=%le \n", theta[i]*180*60/M_PI, thetamin[i]*180*60/M_PI);
-      // thetamin and theta are the same, the center bins, and their values reproduce the ones
-      //    from KiDS. Checked August 16th 2021. They are both calculated
-      //    with set_angular_binning in different places. REDUNDANT. also same as the ones in
-      //    cosmo2D_fullsky_xipm.c
 
       xip[i] = xi_pm_fullsky(1, i, z3, z4);
       xim[i] = xi_pm_fullsky(0, i, z3, z4);
@@ -76,7 +71,7 @@ void run_cov_shear_shear_real_binned(char *SIMULATION, char *OUTFILE, char *PATH
     cov_ng[i] = malloc(Ntheta*sizeof(double));
   }
   //theta is thetamin, and the variable defined as theta in compute is t here, not used anymore
-  //it used to create the log-spaced bins, but now that comes through a choice in set_angular_binning
+  //it used to create the log-spaced bins, but now that comes through a choice in set_angular_binning()
   cov_G_shear_shear_real_fft_binned(theta, Ntheta, dtheta, z1,z2,z3,z4,pm1,pm2, cov_g);
   if(covparams.ng){cov_NG_shear_shear_real_fft_binned(theta, Ntheta, dtheta, z1,z2,z3,z4,pm1,pm2, cov_ng);}
 
