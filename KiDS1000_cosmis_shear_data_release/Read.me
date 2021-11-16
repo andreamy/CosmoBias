@@ -1,0 +1,24 @@
+Chains, data files and an example ploting script for the chains. 
+
+- chains_and_config_files: 
+	This folder contains three subfolders for the three sets of statistics:
+	cosebis: COSEBIs
+	xipm: Two-point correlation functions
+	bp: Band powers
+
+	Each of these subfolders constain two folders: 
+
+	-chain: where the multinest outputs (output_multinest_C.txt) and the maximum posterior results (MAP: maxpost_multinest_start_C.txt) are saved. 
+
+	-config: CosmoSIS configuration files to run kcap: pipeline.ini is the main config file, while values.ini and priors.ini contain the sampled parameters and their priors. 
+
+
+- data_fits:
+	This folder contains three fits files one for each statistics. These files can be used to run the pipeline.ini files in chains_and_config_files/main_chians_iterative_covariance/*/config/
+
+	Each file contains several extensions, with descriptive extension names. 
+	You can read the fits files with python using the read_data_files.py  provided in the same folder.
+
+
+- Plotting:
+	An example plotting script that uses Chainconsumer to plot the cosmic shear chains in sigma_8-Omega_m, S_8-Omega_m and S_8 can be found here: plot_chains.py. chain_functions.py has functions that are needed for the plotting script. 
