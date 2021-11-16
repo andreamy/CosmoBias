@@ -2,7 +2,14 @@
 # coding: utf-8
 # Created by Andrea Manrique Yus -  June 2021 - copyrights
 
+import sys
+import importlib
+sys.path.append('.')
+
+import utils.function_library 
+importlib.reload(utils.function_library)
 from utils.function_library import *
+
 
 # DATA LOADING FOR TESTS
 

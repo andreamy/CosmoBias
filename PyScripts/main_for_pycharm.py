@@ -4,12 +4,12 @@
 
 import sys
 import importlib
+sys.path.append('.')
 
-sys.path.append('/PyScripts/')
-
-import utils.function_library
+import utils.function_library 
 importlib.reload(utils.function_library)
 from utils.function_library import *
+
 
 # DATA LOADING FOR TESTS
 

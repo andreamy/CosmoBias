@@ -1,10 +1,11 @@
 import sys
 import importlib
-sys.path.append('../pycharmProject1/')
+sys.path.append('.')
 
-import utils.function_library
+import utils.function_library 
 importlib.reload(utils.function_library)
 from utils.function_library import *
+
 
 #DATA COVARIANCE MATRIX
 sigma_kids = np.loadtxt("../KiDS1000_cosmis_shear_data_release/data_fits/kids_covariance_matrix")
