@@ -1,4 +1,5 @@
 import os
+os.getcwd()
 import sys
 import natsort
 import fileinput
@@ -28,11 +29,9 @@ def structure_matrix(A, i, j):
     return Sij
 
 
-def partial_derivative_old(mu, mu_shifted, delta_theta, param, i, j):
+def partial_derivative_old(mu, mu_shifted, sigma, data,  delta_theta, param, i, j):
     # load data vector and covariance matrix (sigma)
-    data = np.loadtxt("../KiDS1000_cosmis_shear_data_release/data_fits/data_xipm")
     d = np.reshape(data[:, 1], (-1, 1))
-    sigma = np.load("../notebooks/CovMatrix_kids.npy")
 
     # Compute the equation by parts
     aux1 = forward_derivative_old(mu_shifted, mu)
@@ -363,7 +362,7 @@ def create_X_matrix(simulation_name, fiducial_mu, ini_filename, script, N_parame
         edit_ini_file(ini_filename, 'simulation : ' + simulation_name + '_derivative_shift_' + i,
                       'simulation : default')
         k = k + 1
-        np.save("../notebooks/Xmatrices/X_" + simulation_name, X_matrix)
+        np.save("Output/Xmatrices/X_" + simulation_name, X_matrix)
 
     return X_matrix.T
 
@@ -448,11 +447,11 @@ def setup_and_run_CosmoLike(simulation_name, ini_file, script):
     """
 
     # save inifile to know later which settings were used.
-    target = '../CosmoCov/covs/simulation_settings/inifile_' + simulation_name + '.txt'
+    target = 'CosmoCov/covs/simulation_settings/inifile_' + simulation_name + '.txt'
     shutil.copyfile(ini_file, target)
 
-    xipm_path = os.path.join("../CosmoCov/covs/xipm/", simulation_name)
-    covmat_path = os.path.join("../CosmoCov/covs/output/", simulation_name)
+    xipm_path = os.path.join("CosmoCov/covs/xipm/", simulation_name)
+    covmat_path = os.path.join("CosmoCov/covs/output/", simulation_name)
 
     if (os.path.exists(xipm_path) == False):
         os.mkdir(xipm_path)
@@ -468,7 +467,7 @@ def setup_and_run_CosmoLike(simulation_name, ini_file, script):
 
     # run_covs = subprocess.run([script, 'chmod', '+x', 'script_for_xipm.sh'], ...)
     run_covs = subprocess.run([script],
-                              cwd='../CosmoCov/covs/',
+                              cwd='CosmoCov/covs/',
                               stdout=subprocess.PIPE,
                               universal_newlines=True)
 
@@ -491,12 +490,12 @@ def setup_and_run_CosmoLike_old(simulation_name, euklids, non_gaussian=False):
             script = './script_for_xipm.sh'
 
     # save inifile to know later which settings were used.
-    original = '../CosmoCov/covs/ini_files/' + ini_file
-    target = '../CosmoCov/covs/simulation_settings/inifile_' + simulation_name + '.txt'
+    original = 'CosmoCov/covs/ini_files/' + ini_file
+    target = 'CosmoCov/covs/simulation_settings/inifile_' + simulation_name + '.txt'
     shutil.copyfile(original, target)
 
-    xipm_path = os.path.join("../CosmoCov/covs/xipm/", simulation_name)
-    covmat_path = os.path.join("../CosmoCov/covs/output/", simulation_name)
+    xipm_path = os.path.join("CosmoCov/covs/xipm/", simulation_name)
+    covmat_path = os.path.join("CosmoCov/covs/output/", simulation_name)
 
     if (os.path.exists(xipm_path) == False):
         os.mkdir(xipm_path)
@@ -512,7 +511,7 @@ def setup_and_run_CosmoLike_old(simulation_name, euklids, non_gaussian=False):
 
     # run_covs = subprocess.run([script, 'chmod', '+x', 'script_for_xipm.sh'], ...)
     run_covs = subprocess.run([script],
-                              cwd='../CosmoCov/covs/',
+                              cwd='CosmoCov/covs/',
                               stdout=subprocess.PIPE,
                               universal_newlines=True)
 
@@ -538,12 +537,12 @@ def setup_simulation_old(simulation_name, non_gaussian=False, euklids=False):
             script = './script_for_xipm.sh'
 
     # save inifile to know later which settings were used.
-    original = '../CosmoCov/covs/ini_files/' + ini_file
-    target = '../CosmoCov/covs/simulation_settings/inifile_' + simulation_name + '.txt'
+    original = 'CosmoCov/covs/ini_files/' + ini_file
+    target = 'CosmoCov/covs/simulation_settings/inifile_' + simulation_name + '.txt'
     shutil.copyfile(original, target)
 
-    xipm_path = os.path.join("../CosmoCov/covs/xipm/", simulation_name)
-    covmat_path = os.path.join("../CosmoCov/covs/output/", simulation_name)
+    xipm_path = os.path.join("CosmoCov/covs/xipm/", simulation_name)
+    covmat_path = os.path.join("CosmoCov/covs/output/", simulation_name)
 
     if (os.path.exists(xipm_path) == False):
         os.mkdir(xipm_path)
@@ -561,12 +560,12 @@ def setup_simulation_old(simulation_name, non_gaussian=False, euklids=False):
 
 def setup_simulation(simulation_name, ini_file):
     # save inifile to know later which settings were used.
-    target = '../CosmoCov/covs/simulation_settings/inifile_' + simulation_name + '.txt'
+    target = 'CosmoCov/covs/simulation_settings/inifile_' + simulation_name + '.txt'
     shutil.copyfile(ini_file, target)
 
     #create xipm directory
-    xipm_path = os.path.join("../CosmoCov/covs/xipm/", simulation_name)
-    covmat_path = os.path.join("../CosmoCov/covs/output/", simulation_name)
+    xipm_path = os.path.join("CosmoCov/covs/xipm/", simulation_name)
+    covmat_path = os.path.join("CosmoCov/covs/output/", simulation_name)
 
     if (os.path.exists(xipm_path) == False):
         os.mkdir(xipm_path)
@@ -583,7 +582,7 @@ def setup_simulation(simulation_name, ini_file):
 def run_CosmoLike(script):
     # run_covs = subprocess.run([script, 'chmod', '+x', 'script_for_xipm.sh'], ...)
     run_covs = subprocess.run([script],
-                              cwd='../CosmoCov/covs/',
+                              cwd='CosmoCov/covs/',
                               stdout=subprocess.PIPE,
                               universal_newlines=True)
 
@@ -1118,7 +1117,7 @@ def insert_new_values(parameters_dict, filename):
 
 
 def RunCosmolike_Nparameters(mini_dict):
-    inifile = '../CosmoCov/covs/ini_files/Ndim_kids.ini'
+    inifile = 'CosmoCov/covs/ini_files/Ndim_kids.ini'
 
     # modify value(s) in file.The mini_dict can get any number of parameters
     insert_new_values(mini_dict, inifile)
@@ -1139,9 +1138,9 @@ def RunCosmolike_Nparameters(mini_dict):
     run_CosmoLike('./Ndim_script.sh')
 
     # Create theory vector
-    xipm_directory = "../CosmoCov/covs/xipm/" + simulation + "/"
+    xipm_directory = "CosmoCov/covs/xipm/" + simulation + "/"
     create_theory_vector(xipm_directory, simulation)
-    mu_cosmolike = np.reshape(np.load("../CosmoCov/covs/xipm/{}/"
+    mu_cosmolike = np.reshape(np.load("CosmoCov/covs/xipm/{}/"
                                       "vector_xipm_kids_{}.npy".format(simulation, simulation)), (-1, 1))
 
     # Compute Xmatrix
@@ -1151,7 +1150,7 @@ def RunCosmolike_Nparameters(mini_dict):
                               './Ndim_script.sh', Ndim_parameters=mini_dict)
 
     # Load data
-    kids_covmat = np.loadtxt("../KiDS1000_cosmis_shear_data_release/data_fits/kids_covariance_matrix")
+    kids_covmat = np.loadtxt("KiDS1000_cosmis_shear_data_release/data_fits/kids_covariance_matrix")
     theory_covmat = np.load("CovMatrix_class3.0_closer_derivative.npy")
     fake_data_vector = np.load("fake_datavectors.npy")[225]  # for example, Number 225
     data_xipm = np.reshape(fake_data_vector, (-1, 1))

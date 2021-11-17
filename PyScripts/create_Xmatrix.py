@@ -16,23 +16,23 @@ from utils.function_library import *
 N_parameters = 10
 
 # THEORY VECTOR
-mu_cosmolike = np.reshape(np.load("../CosmoCov/covs/xipm/Class3.0_closer_derivative/vector_xipm_kids_Class3.0_closer_derivative.npy"), (-1, 1))
+mu_cosmolike = np.reshape(np.load("CosmoCov/covs/xipm/Class3.0_closer_derivative/vector_xipm_kids_Class3.0_closer_derivative.npy"), (-1, 1))
 
 # THEORY COVARIANCE MATRIX
-sigma = np.load("../notebooks/CovMatrix_class3.0_closer_derivative.npy")
+sigma = np.load("Output/covmats/CovMatrix_class3.0_closer_derivative.npy")
 
 # DATA VECTOR
-kids_file = np.loadtxt("../KiDS1000_cosmis_shear_data_release/data_fits/data_xipm")
+kids_file = np.loadtxt("KiDS1000_cosmis_shear_data_release/data_fits/data_xipm")
 data_xipm = np.reshape(kids_file[:, 1], (-1, 1))
 Ndim = len(data_xipm)
 
 # DATA COVARIANCE MATRIX
-sigma_kids = np.loadtxt("../KiDS1000_cosmis_shear_data_release/data_fits/kids_covariance_matrix")
+sigma_kids = np.loadtxt("KiDS1000_cosmis_shear_data_release/data_fits/kids_covariance_matrix")
 
 # Inifile: this is just for running purposes, as this is the file set to run in the bash script.
 # We copy over it the inifile of interest.
-bash_inifile = "../CosmoCov/covs/ini_files/cov_kids_xipm_runs.ini"
-inifile_to_copy = "../CosmoCov/covs/simulation_settings/inifile_Class3.0_closer_derivative.txt"
+bash_inifile = "CosmoCov/covs/ini_files/cov_kids_xipm_runs.ini"
+inifile_to_copy = "CosmoCov/covs/simulation_settings/inifile_Class3.0_closer_derivative.txt"
 
 #This step allows to use different inifiles (inifile_to_copy),  without having to change
 #  the bash script whenever we switch.
@@ -45,7 +45,7 @@ simulation = "class3.0_closer_derivative"
 xmatrix_filename = 'X_' + simulation + '.npy'
 script = './script_for_xipm.sh' #the script to run by Cosmolike
 
-if (os.path.isfile("../notebooks/Xmatrices/"+xmatrix_filename) == False):
+if (os.path.isfile("Output/Xmatrices/"+xmatrix_filename) == False):
     print("Xmatrix does not exists, computing...")
     Xmatrix = create_X_matrix(simulation, mu_cosmolike, bash_inifile,
                               script, N_parameters)
@@ -53,6 +53,6 @@ if (os.path.isfile("../notebooks/Xmatrices/"+xmatrix_filename) == False):
 
 else:
     print("Xmatrix already exists, loading from file.")
-    Xmatrix = np.load("../notebooks/Xmatrices/"+xmatrix_filename)
+    Xmatrix = np.load("Output/Xmatrices/"+xmatrix_filename)
 
 
