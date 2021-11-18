@@ -20,3 +20,4 @@
 
 - shifted_covariance (to be used in point 4, 5, 6): run shift_covmat.py (in the folder PyScripts). All shifted covmas can be found in  Output/covmats.
 
+The code to solve the task list can be found in the folder notebooks/. Any function that is used throughout the repository and not defined within the same file can be found in PyScripts/utils/function_library.py
