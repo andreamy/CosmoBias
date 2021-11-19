@@ -1,3 +1,10 @@
+Notes:
+
+- Add the contents of the ini_files/ folder to the directory CosmoCov/covs/ini_files/ once CosmoCov has been installed.
+- Add the bash scripts to the directory CosmoCov/covs/.
+- Add the directory xipm/ to the directory CosmoCov/covs/ . This is where the xipm output will be saved in, and from which the theory vectors are loaded later in the Python code.
+
+
 **Files to be added/replaced**:
 
 - The file CosmoCov/cosmolike_core/theory/run_covariances_real_bin_fft.c  needs to be replaced by the one in here in order to include the modified function **void run_cov_shear_shear_real_binned(char *SIMULATION, char *OUTFILE, char *PATH, double *t, double *theta, double *dtheta, int Ntheta, int n1, int n2, int pm1, int pm2, int start)**. This allows to print the xipm output. 
@@ -26,5 +33,7 @@
       OLD: run_cov_shear_shear_real_bin(OUTFILE,covparams.outdir,thetamin,dtheta,Ntheta,l,m,1,1,k);
       
       NEW: run_cov_shear_shear_real_bin(covparams.simulation, OUTFILE,covparams.outdir,thetamin,dtheta,Ntheta,l,m,1,1,k);
+     
+     
         
  
