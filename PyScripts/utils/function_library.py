@@ -29,44 +29,6 @@ def structure_matrix(A, i, j):
     return Sij
 
 
-def partial_derivative_old(mu, mu_shifted, sigma, data,  delta_theta, param, i, j):
-    # load data vector and covariance matrix (sigma)
-    d = np.reshape(data[:, 1], (-1, 1))
-
-    # Compute the equation by parts
-    aux1 = forward_derivative_old(mu_shifted, mu)
-    X = np.reshape(aux1, (-1, 1))
-    aux2 = np.matmul(X.T, inv(sigma))
-    bracket = 1 / (np.matmul(aux2, X))
-    dsigma = structure_matrix(sigma, i, j)
-    result = bracket * X.T @ inv(sigma) @ dsigma @ (inv(sigma) @ X * bracket * X.T @ inv(sigma) -
-                                                    inv(sigma)) @ (d - np.reshape(mu, (-1, 1)) + X * param)
-    return result
-
-
-def linear_theta_old(mu, mu_shifted, sigma, d, param, inverted_sigma):
-    # sigma must be the shifted one here
-    # mu and mu_shifted must have been reshaped to 2d column arrays (N, 1)
-    X = np.reshape(forward_derivative_old(mu_shifted, mu), (-1, 1))
-
-    if inverted_sigma:
-        theta_lin = 1 / (X.T @ sigma @ X) @ X.T @ sigma @ (d - mu + X * param)
-
-    else:
-        theta_lin = 1 / (X.T @ inv(sigma) @ X) @ X.T @ inv(sigma) @ (d - mu + X * param)
-
-    return theta_lin
-
-
-def forward_derivative_old(mu_shifted, mu):
-    N = len(mu)
-    X = np.zeros((N,))
-    h = 0.01  # had 0.0001 but cosmolike (or other theory codes) do not have such resolution
-
-    for i in range(N): X[i] = (mu_shifted[i] - mu[i]) / h
-    return X
-
-
 def pos_neg_colormap(matrix):
     # Mask an array where smaller/greater than a given value.
     pos_matrix = np.ma.masked_less(matrix, 0)
@@ -123,6 +85,9 @@ def largest_values(matrix, number_of_values):
 
 def reduce_dimension(covmat, theory_vector, data_vector):
     """
+    Reduce the dimension of the covmat and theory/data vectors, following the KiDS-1000 cosmic
+    shear paper (asgari 2020) where they discard first three values of xi_m for the chi-square test.
+
     Loop: for every xi_minus vector per z-bin combination, keep first three indices with
     np.s_[0:3] (to later discard first 3 theta bins). Finally reshape data and theory vectors
     to (225,1) just like above with the covariance matrix (covmat).
@@ -149,6 +114,9 @@ def reduce_dimension(covmat, theory_vector, data_vector):
 
 def reduce_vector_dimension(vector):
     """
+    Reduce the dimension of the theory/data vectors, following the KiDS-1000 cosmic
+    shear paper (asgari 2020) where they discard first three values of xi_m for the chi-square test.
+
     Loop: for every xi_minus vector per z-bin combination, keep first three indices with
     np.s_[0:3] (to later discard first 3 theta bins). Finally reshape vector (data or theory)
     to (225,1) just like above with the covariance matrix (covmat).
@@ -164,28 +132,6 @@ def reduce_vector_dimension(vector):
     reshaped_vector = np.delete(vector, indices_to_discard, axis=0)
 
     return reshaped_vector
-
-
-def reduce_covmat_dimension(covmat):
-    """
-    Loop: for every xi_minus vector per z-bin combination, keep first three indices with
-    np.s_[0:3] (to later discard first 3 theta bins). Finally reshape covmat to (225,225).
-    """
-    xim_indices = np.arange(135, 270)
-    xim_indices_per_zbin = np.split(xim_indices, 15)
-    indices_to_discard = np.array(())
-
-    for xim_zbin in xim_indices_per_zbin:
-        indices_to_discard = np.concatenate((indices_to_discard, xim_zbin[np.s_[0:3]]))
-
-    indices_to_discard = indices_to_discard.astype(int)
-
-    reshaped_covmat = covmat
-    reshaped_covmat = np.delete(reshaped_covmat, indices_to_discard, axis=0)
-    reshaped_covmat = np.delete(reshaped_covmat, indices_to_discard, axis=1)
-    # print(reshaped_covmat.shape)
-
-    return reshaped_covmat
 
 
 def get_cosmological_parameters(ini_filename, N_parameters):
@@ -250,6 +196,22 @@ def edit_ini_file(ini_filename, string_to_replace, new_string):
 
 
 def create_theory_vector(xipm_path, simulation_name):
+    """
+    Create an array containing all the xipm values from every zbin pair computed by CosmoCov for one simulation.
+    Parameters
+    ----------
+    xipm_path : string
+                Directory containing all the xipm files (one per zbin pair).
+
+    simulation_name : string
+                    Name of the simulation. All the output files/directories related to this
+                    simulation will contain this string.
+    Returns
+    -------
+    xipm_vector : darray
+                The theory vector, reshaped to 2D to allow for matrix multiplications.
+
+    """
     xip_vector = np.array(())
     xim_vector = np.array(())
     listdir = []
@@ -477,88 +439,22 @@ def setup_and_run_CosmoLike(simulation_name, ini_file, script):
     return create_theory_vector(xipm_path, simulation_name)
 
 
-def setup_and_run_CosmoLike_old(simulation_name, euklids, non_gaussian=False):
-    if euklids == True:
-        ini_file = 'cov_euklids.ini'
-        script = './script_for_xipm_euklids.sh'
-    else:
-        if non_gaussian == True:
-            ini_file = 'ng_cov_kids.ini'
-            script = './script.sh'
-        else:
-            ini_file = 'cov_kids_xipm_runs.ini'
-            script = './script_for_xipm.sh'
-
-    # save inifile to know later which settings were used.
-    original = 'CosmoCov/covs/ini_files/' + ini_file
-    target = 'CosmoCov/covs/simulation_settings/inifile_' + simulation_name + '.txt'
-    shutil.copyfile(original, target)
-
-    xipm_path = os.path.join("CosmoCov/covs/xipm/", simulation_name)
-    covmat_path = os.path.join("CosmoCov/covs/output/", simulation_name)
-
-    if (os.path.exists(xipm_path) == False):
-        os.mkdir(xipm_path)
-        print("Directory '%s' created " % (xipm_path))
-    else:
-        print("Directory '%s' already exists " % (xipm_path))
-
-    if (os.path.exists(covmat_path) == False):
-        os.mkdir(covmat_path)
-        print("Directory '%s' created " % (covmat_path))
-    else:
-        print("Directory '%s'  already exists " % (covmat_path))
-
-    # run_covs = subprocess.run([script, 'chmod', '+x', 'script_for_xipm.sh'], ...)
-    run_covs = subprocess.run([script],
-                              cwd='CosmoCov/covs/',
-                              stdout=subprocess.PIPE,
-                              universal_newlines=True)
-
-    # If the program has run correctly, it will print the last part of the output, saying PROGRAM EXECUTED.
-    print(run_covs.stdout[-54:])
-
-    return create_theory_vector(xipm_path, simulation_name)
-
-
-def setup_simulation_old(simulation_name, non_gaussian=False, euklids=False):
-    # this can be used to create all directories and setup the file without
-    # runnning Cosmolike. That can be done separately
-
-    if euklids == True:
-        ini_file = 'cov_euklids.ini'
-        script = './euklids_script.sh'
-    else:
-        if non_gaussian == True:
-            ini_file = 'ng_cov_kids.ini'
-            script = './script.sh'
-        else:
-            ini_file = 'cov_kids_xipm_runs.ini'
-            script = './script_for_xipm.sh'
-
-    # save inifile to know later which settings were used.
-    original = 'CosmoCov/covs/ini_files/' + ini_file
-    target = 'CosmoCov/covs/simulation_settings/inifile_' + simulation_name + '.txt'
-    shutil.copyfile(original, target)
-
-    xipm_path = os.path.join("CosmoCov/covs/xipm/", simulation_name)
-    covmat_path = os.path.join("CosmoCov/covs/output/", simulation_name)
-
-    if (os.path.exists(xipm_path) == False):
-        os.mkdir(xipm_path)
-        print("Directory '%s' created " % (xipm_path))
-    else:
-        print("Directory '%s' already exists " % (xipm_path))
-
-    if (os.path.exists(covmat_path) == False):
-        os.mkdir(covmat_path)
-        print("Directory '%s' created " % (covmat_path))
-    else:
-        print("Directory '%s'  already exists " % (covmat_path))
-
-    return script
-
 def setup_simulation(simulation_name, ini_file):
+    """
+    Creates output directories needed for CosmoCov.
+
+    Parameters
+    ----------
+    simulation_name : string
+                        Name of the simulation. All the output files/directories related to this
+                        simulation will contain this string.
+    ini_file :  string
+                Name of the inifile called by CosmoCov.
+
+    Returns
+    -------
+
+    """
     # save inifile to know later which settings were used.
     target = 'CosmoCov/covs/simulation_settings/inifile_' + simulation_name + '.txt'
     shutil.copyfile(ini_file, target)
@@ -591,9 +487,10 @@ def run_CosmoLike(script):
 
 
 def chi_square_test(data_covariance_matrix, theory_vector, data_vector):
-    """ REDUCE COVMAT AND VECTORS DIMENSION FOR CHI-SQUARED TEST
-    Following the KiDS-1000 cosmic shear paper (asgari 2020) where they discard first three values of
-    xi_m for the chi-square test"""
+    """ Compute reduced chi square for a given covariance matrix, theory and data vector. Their dimensions have to be
+    reduced for KiDS-1000, following the cosmic shear paper (asgari 2020) where they discard first three values of
+    xi_m for the chi-square test .
+    """
 
     reshaped_covmat, mu_reshaped, data_reshaped = reduce_dimension(data_covariance_matrix,
                                                                    theory_vector, data_vector)
@@ -663,9 +560,6 @@ def linear_theta(X, sigma, mu, data, cosmo_parameters, inverted_sigma=False):
 
     return theta_lin
 
-
-def sigmas_away(mean_value, value, sigma):
-    return abs((value - mean_value)/sigma)
 
 
 def shift_covmat_elements(simulation, X, sigma, mu, data, cosmo_parameters, type_of_shift='up', inverted_sigma=False):
@@ -757,34 +651,6 @@ def shift_covmat_elements(simulation, X, sigma, mu, data, cosmo_parameters, type
     return parameter_shifts_sym
 
 
-# NOT NEEDED IN THE END
-def shift_covmat_free_parameters(free_parameter, X, sigma_shifted, mu, data, cosmo_parameters):
-    k = 0
-    N_dim = sigma_shifted.shape[0]
-    N_parameters = len(cosmo_parameters)
-    parameter_shifts = np.zeros(shape=(N_dim, N_dim, N_parameters))
-
-    initial_linear_parameters = linear_theta(X, sigma_shifted, mu, data, cosmo_parameters)
-
-    # ATTENTION, 36315 ELEMENTS TO COMPUTE, TAKES LONG TIME AND ALL CPU's
-    for i in range(N_dim):
-        for j in range(i, N_dim):
-            parameter_shifts[i, j] = linear_theta(X, sigma_shifted, mu, data, cosmo_parameters)[:, 0] \
-                                     - initial_linear_parameters[:, 0]
-            k = k + 1
-            if k % 1000 == 0: print(k)
-
-    parameter_shifts_transposed = np.transpose(parameter_shifts.copy(), (1, 0, 2))
-
-    for i in range(N_parameters):
-        np.fill_diagonal(parameter_shifts_transposed[:, :, i], 0)
-
-    parameter_shifts_sym = parameter_shifts_transposed + parameter_shifts
-
-    np.save("parameter_shifts_modified_" + free_parameter, parameter_shifts_sym)
-    return parameter_shifts_sym
-
-
 def feature_scaling_norm(vector, vector_max, vector_min):
     """
     Normalizes vector within values of vector_max and vector_min.
@@ -806,6 +672,7 @@ def feature_scaling_norm(vector, vector_max, vector_min):
     b = +1
     norm = a + (((vector - vector_min) * (b - a)) / (vector_max - vector_min))
     return norm
+
 
 def precision_recommendation(X, sigma, mu, data, cosmo_parameters, survey='K1000'):
     """
@@ -927,10 +794,34 @@ def normalize_area(f, x):
 
 
 def fisher_matrix(X, sigma):
+    """
+    Computes Fisher matrix following the notation in Eq. 7 of Sellentin(2019)
+
+    Parameters
+    ----------
+    X :  2darray (transposed for convenience)
+               Non-square matrix containing the first derivatives of fiducial_mu with respect to each
+               cosmological parameter.
+    sigma : 2darray
+            Covariance matrix with size (Ndim, Ndim), (e.g. for K1000
+            the dimension Ndim = 270).
+    """
     return  X.T @ inv(sigma) @ X
 
 
 def precision_matrix(sigma, X):
+    """
+    Computes the top-hat priors from K1000 methodology paper, arranging their distributions in a matrix.
+
+    Parameters
+    ----------
+    X :  2darray (transposed for convenience)
+               Non-square matrix containing the first derivatives of fiducial_mu with respect to each
+               cosmological parameter.
+    sigma : 2darray
+            Covariance matrix with size (Ndim, Ndim), (e.g. for K1000
+            the dimension Ndim = 270).
+    """
     # top-hat priors from K1000 (methodology paper)
     h = [0.64, 0.82]
     omega_ch2 = [0.051, 0.255]
@@ -973,24 +864,6 @@ def precision_matrix(sigma, X):
 def standardDeviation_Fisher(X, sigma):
     fisher_matrix = X.T @ inv(sigma) @ X
     return np.sqrt(np.diag(fisher_matrix))
-
-
-def sigmas_away(mean_value, value, sigma):
-    return abs((value - mean_value)/sigma)
-
-
-def gaussian_2D(x, y, x_mean, y_mean, sigma_x, sigma_y, norm=True):
-    z = np.exp(-( (x-x_mean)**2/(2*sigma_x**2) + (y-y_mean)**2/(2*sigma_y**2) ))
-    if norm:
-        # Normalize
-        x_grid = np.linspace(-5*sigma_x, 5*sigma_x, 3000)
-        y_grid = np.linspace(-5*sigma_y, 5*sigma_y, 3000)
-        x_grid, y_grid = np.meshgrid(x_grid, y_grid)
-        z_grid  = np.exp(- ( (x_grid-x_mean)**2/(2*sigma_x**2)+(y_grid-y_mean)**2/(2*sigma_y**2) ) )
-        Integral = np.trapz(np.trapz(z_grid, x_grid[0,:]), y_grid[:,0])
-        return z/Integral
-    else:
-        return z
 
 
 def multivariate_gaussian(pos, mu, Sigma):
@@ -1059,19 +932,6 @@ def plot_matrix_colormap(matrix, colormap=None, min_value=None, max_value=None, 
     plt.show()
     return ax1
 
-
-def plot_matrix_colormap_old(matrix, min_value=None, max_value=None,
-                             title="Default title"):
-    fig, (ax1) = plt.subplots(figsize=(10, 7), ncols=1)
-    plt.title(title)
-    norm = colors.TwoSlopeNorm(vcenter=0)
-    discrete_cmap = matplotlib.cm.get_cmap("RdBu", 10)
-    figplot = ax1.imshow(matrix, vmax=max_value, vmin=min_value, norm=norm,
-                         cmap="RdBu", interpolation='none')
-    fig.colorbar(figplot, ax=ax1)
-    plt.show()
-
-
 def plot_derivatives(simulation):
     xmatrix_filename = 'X_' + simulation + '.npy'
     #xmatrix_filename = 'X_h_{}percent_ofsigma.npy'.format(h_percent)
@@ -1105,8 +965,21 @@ def K1000_standard_dev_symmetrized():
 
 
 def insert_new_values(parameters_dict, filename):
-    """Note: this function is case sensitive, be mindful of how variables are named in CosmoCov"""
+    """
+    Note: this function is case sensitive, be mindful of how variables are named in CosmoCov
 
+    Insert new lines at the beginning of an existing file. These lines follow the convention of CosmoCov inifiles for
+     parameter names and values.
+
+    Parameters
+    ----------
+    parameters_dict : dict
+                    Dictionary containing the parameter names and values that the user wishes to add.
+    filename : string
+                Name of the file to be edited
+
+
+    """
     # read file once per parameter and check which line starts with i (e.g omega_m, h0, etc)
     for i in parameters_dict:
         for line in fileinput.input([filename], inplace=True):
@@ -1117,6 +990,15 @@ def insert_new_values(parameters_dict, filename):
 
 
 def RunCosmolike_Nparameters(mini_dict):
+    """
+    Run Cosmolike with only certain parameter values (given in mini_dict) different from the default ones.
+
+    Parameters
+    ----------
+    mini_dict : dict
+                Dictionary of arbitrary length containing the parameter names and values that the user wishes to change.
+
+    """
     inifile = 'CosmoCov/covs/ini_files/Ndim_kids.ini'
 
     # modify value(s) in file.The mini_dict can get any number of parameters
@@ -1173,6 +1055,7 @@ def RunCosmolike_Nparameters(mini_dict):
                               'omb': 0.041, 'h0': 0.68, 'A_ia': 0.41}
     for i in mini_dict:
         insert_new_values({i: close_to_bestfit_cosmo[i]}, inifile)
+
 
 
 def normalise_shifts(shift_matrix):
