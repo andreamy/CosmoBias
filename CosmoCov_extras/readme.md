@@ -1,7 +1,8 @@
 Notes:
 
-- Add the files in the ini_files folder to the directory CosmoCov/covs/ini_files/ once CosmoCov has been installed.
-- Add the directory xipm to the directory CosmoCov/covs/ . This is where the xipm output will be saved in, and from which the theory vectors are loaded later in the Python code.
+- Add the contents of the ini_files/ folder to the directory CosmoCov/covs/ini_files/ once CosmoCov has been installed.
+- Add the bash scripts to the directory CosmoCov/covs/.
+- Add the directory xipm/ to the directory CosmoCov/covs/ . This is where the xipm output will be saved in, and from which the theory vectors are loaded later in the Python code.
 
 
 **Files to be added/replaced**:
