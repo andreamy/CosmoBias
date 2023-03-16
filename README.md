@@ -1,5 +1,7 @@
 # Biasing_covmat
 
+Note that the code is documented for internal use, and explanations of its use would be released in a paper in works. For a full overview of the function library refer to PyScripts/utils/function_library.py.
+
 **Prerequisites**: 
 - Both CosmoCov and CLASS v=>3.0 need to be installed in order to use CosmoBias. Some files (CLASS_wrapper.c, cosmo2D_fullsky_xipm.c, run_covariances_real_bin_fft.c) have to be added/modified in CosmoCov/cosmolike_core/theory/ in order to get the xipm data vector and to run HMCode via CLASS. These can be found in the folder 'CosmoCov_extras'.
 
